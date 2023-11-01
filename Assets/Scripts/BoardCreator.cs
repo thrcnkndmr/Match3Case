@@ -76,12 +76,12 @@ public class BoardCreator : MonoBehaviour
         return tileItemsList[randomItemIndex];
     }
 
-    private void PlacementOfItem(TilePieceItem tilePieceItem, int x, int y)
+    private void PlacementOfItem(PieceItem pieceItem, int x, int y)
     {
-        var itemTransform = tilePieceItem.transform;
+        var itemTransform = pieceItem.transform;
         itemTransform.position = new Vector3(x, y,-1);
         itemTransform.transform.rotation = Quaternion.identity;
-        tilePieceItem.SetCoordinates(x,y);
+        pieceItem.SetCoordinates(x,y);
         
     }
 
@@ -93,7 +93,7 @@ public class BoardCreator : MonoBehaviour
             {
                 
                 var randomItem = _pool.SpawnObject(Vector3.zero, GetRandomItem(), null,Quaternion.identity);
-                PlacementOfItem(randomItem.GetComponent<TilePieceItem>(),i,j);
+                PlacementOfItem(randomItem.GetComponent<PieceItem>(),i,j);
             }
         }
     }

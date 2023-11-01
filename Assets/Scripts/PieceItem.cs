@@ -1,9 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
-public class TilePieceItem : MonoBehaviour
+public class PieceItem : MonoBehaviour
 {
    public int rowIndex;
    public int columnIndex;
