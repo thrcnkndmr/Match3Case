@@ -10,7 +10,12 @@ public class BoardCreator : MonoBehaviour
     private Pool _pool;
 
     private Tile[,] _tiles;
-    
+    private PieceItem[,] _pieceItems;
+
+    public Tile[,] Tiles => _tiles;
+    public PieceItem[,] PieceItems => _pieceItems;
+
+
     public List<PoolItemType> tileItemsList = new();
 
     private void Awake()
@@ -35,7 +40,7 @@ public class BoardCreator : MonoBehaviour
 
     private void BoardInitialize()
     {
-        CreatingNewArray(width,height);
+        CreatingNewArray(width, height);
         CreatingTiles();
         AddingItemsToList();
         FillRandomToBoard();
@@ -52,7 +57,7 @@ public class BoardCreator : MonoBehaviour
     private void CreatingNewArray(int row, int column)
     {
         _tiles = new Tile[row, column];
-
+        _pieceItems = new PieceItem[row, column];
     }
 
     private void CreatingTiles()
@@ -63,9 +68,9 @@ public class BoardCreator : MonoBehaviour
             {
                 var tilePiece = _pool.SpawnObject(new Vector3(i, j, 0), PoolItemType.TilePrefab, transform,
                     Quaternion.identity);
-                tilePiece.name = "Tile (" + i + "," + j+ ")";
+                tilePiece.name = "Tile (" + i + "," + j + ")";
                 _tiles[i, j] = tilePiece.GetComponent<Tile>();
-                _tiles[i,j].TileInitialized(i,j,this);
+                _tiles[i, j].TileInitialized(i, j);
             }
         }
     }
@@ -76,13 +81,23 @@ public class BoardCreator : MonoBehaviour
         return tileItemsList[randomItemIndex];
     }
 
-    private void PlacementOfItem(PieceItem pieceItem, int x, int y)
+    public void PlacementOfItem(PieceItem pieceItem, int x, int y)
     {
         var itemTransform = pieceItem.transform;
-        itemTransform.position = new Vector3(x, y,-1);
+        itemTransform.position = new Vector3(x, y, -1);
         itemTransform.transform.rotation = Quaternion.identity;
-        pieceItem.SetCoordinates(x,y);
-        
+
+        if (IsWithinBounds(x, y))
+        {
+            _pieceItems[x, y] = pieceItem;
+        }
+
+        pieceItem.SetCoordinates(x, y);
+    }
+
+    private bool IsWithinBounds(int x, int y)
+    {
+        return (x >= 0 && x < width && y >= 0 && y < height);
     }
 
     private void FillRandomToBoard()
@@ -91,9 +106,8 @@ public class BoardCreator : MonoBehaviour
         {
             for (var j = 0; j < height; j++)
             {
-                
-                var randomItem = _pool.SpawnObject(Vector3.zero, GetRandomItem(), null,Quaternion.identity);
-                PlacementOfItem(randomItem.GetComponent<PieceItem>(),i,j);
+                var randomItem = _pool.SpawnObject(Vector3.zero, GetRandomItem(), null, Quaternion.identity);
+                PlacementOfItem(randomItem.GetComponent<PieceItem>(), i, j);
             }
         }
     }
@@ -101,6 +115,5 @@ public class BoardCreator : MonoBehaviour
     private void OnDisable()
     {
         EventManager.OnStartGameEvent -= OnStartGame;
-
     }
 }
