@@ -3,7 +3,7 @@ using System;
 public static class EventManager
 {
     public static event Action OnStartGameEvent;
-    public static event Action OnMoveItemEvent;
+    public static event Action OnMovedItem;
     public static event Action OnFindMatch;
 
     public static void OnStartGameInvoker()
@@ -16,8 +16,8 @@ public static class EventManager
         OnFindMatch?.Invoke();
     }
 
-    private static void OnMoveItemEventInvoker()
+    public static void OnMovedItemEventInvoker()
     {
-        OnMoveItemEvent?.Invoke();
+        OnMovedItem?.Invoke();
     }
 }

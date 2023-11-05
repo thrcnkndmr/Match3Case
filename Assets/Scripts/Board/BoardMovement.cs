@@ -1,4 +1,8 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using DG.Tweening;
 
 public class BoardMovement : MonoBehaviour
 {
@@ -10,6 +14,7 @@ public class BoardMovement : MonoBehaviour
     public bool isMoving;
 
     private BoardCreator _boardCreator;
+    private BoardMatchFinding _boardMatchFinding;
 
     private void Awake()
     {
@@ -19,6 +24,7 @@ public class BoardMovement : MonoBehaviour
     private void Init()
     {
         _boardCreator = BoardManager.Instance.boardCreator;
+        _boardMatchFinding = BoardManager.Instance.boardMatchFinding;
     }
 
     public void ClickedItem(Tile tile)
@@ -45,13 +51,33 @@ public class BoardMovement : MonoBehaviour
         }
     }
 
-    private void SwitchTiles(Tile clickedTile, Tile targetTile, float t)
+    private void SwitchTiles(Tile clickedTile, Tile targetTile, float time)
+    {
+        StartCoroutine(SwitchTilesRoutine(clickedTile, targetTile, time));
+    }
+
+    private IEnumerator SwitchTilesRoutine(Tile clickedTile, Tile targetTile, float t)
     {
         var clickedPiece = _boardCreator.PieceItems[clickedTile.rowIndex, clickedTile.columnIndex];
         var targetPiece = _boardCreator.PieceItems[targetTile.rowIndex, targetTile.columnIndex];
+        if (targetPiece != null && clickedPiece != null)
+        {
+            clickedPiece.GetComponent<PieceItemMovement>().MoveAction(targetTile.rowIndex, targetTile.columnIndex, t);
+            targetPiece.GetComponent<PieceItemMovement>().MoveAction(clickedTile.rowIndex, clickedTile.columnIndex, t);
 
-        clickedPiece.GetComponent<PieceItemMovement>().MoveAction(targetTile.rowIndex, targetTile.columnIndex, t);
-        targetPiece.GetComponent<PieceItemMovement>().MoveAction(clickedTile.rowIndex, clickedTile.columnIndex, t);
+
+            yield return new WaitForSeconds(0.6f);
+
+            if (!_boardMatchFinding.FindAndClearMatches(clickedTile, targetTile))
+            {
+                clickedPiece.GetComponent<PieceItemMovement>()
+                    .MoveAction(clickedTile.rowIndex, clickedTile.columnIndex, t);
+                targetPiece.GetComponent<PieceItemMovement>()
+                    .MoveAction(targetTile.rowIndex, targetTile.columnIndex, t);
+                yield return new WaitForSeconds(0.6f);
+            }
+        }
+
         _clickedTile = null;
         _targetTile = null;
     }

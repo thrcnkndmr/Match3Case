@@ -1,14 +1,15 @@
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class BoardMatchFinding : MonoBehaviour
 {
-    private BoardMovement _boardMovement;
     private BoardCreator _boardCreator;
     private SpriteRenderer[,] _tileRenderers;
+    private Pool _pool;
 
-    private Dictionary<PoolItemType, Color> _itemTypeColors = new Dictionary<PoolItemType, Color>
+
+    private readonly Dictionary<PoolItemType, Color> _itemTypeColors = new Dictionary<PoolItemType, Color>
     {
         { PoolItemType.Red, Color.red },
         { PoolItemType.Blue, Color.blue },
@@ -24,15 +25,15 @@ public class BoardMatchFinding : MonoBehaviour
     private void Init()
     {
         _boardCreator = BoardManager.Instance.boardCreator;
-        _boardMovement = BoardManager.Instance.boardMovement;
+        _pool = Pool.Instance;
     }
 
     private void InitializeTileRenderers()
     {
         _tileRenderers = new SpriteRenderer[_boardCreator.width, _boardCreator.height];
-        for (int x = 0; x < _boardCreator.width; x++)
+        for (var x = 0; x < _boardCreator.width; x++)
         {
-            for (int y = 0; y < _boardCreator.height; y++)
+            for (var y = 0; y < _boardCreator.height; y++)
             {
                 _tileRenderers[x, y] = _boardCreator.Tiles[x, y].GetComponent<SpriteRenderer>();
             }
@@ -42,95 +43,150 @@ public class BoardMatchFinding : MonoBehaviour
     private void OnEnable()
     {
         EventManager.OnFindMatch += OnFindMatch;
+        EventManager.OnMovedItem += OnMovedItem;
+    }
+
+    private void OnMovedItem()
+    {
+        throw new System.NotImplementedException();
     }
 
     private void OnFindMatch()
     {
         InitializeTileRenderers();
-        HighlightMatches();
     }
 
-    private List<PieceItem> FindMatches(int startX, int startY, Vector2 searchDirection, int minLength = 3)
+    public List<PieceItem> FindMatchesAt(int startX, int startY, Vector2 searchDirection, int minLength = 3)
     {
-        List<PieceItem> matches = new List<PieceItem>();
-
-        PieceItem startPiece = _boardCreator.IsWithinBounds(startX, startY)
-            ? _boardCreator.PieceItems[startX, startY]
-            : null;
-        if (startPiece == null) return matches;
-
-        matches.Add(startPiece);
-        int nextX, nextY;
-
-        int maxLength = (searchDirection.x != 0) ? _boardCreator.width : _boardCreator.height;
-
-        for (int i = 1; i < maxLength; i++)
         {
-            nextX = startX + (int)Mathf.Clamp(searchDirection.x, -1, 1) * i;
-            nextY = startY + (int)Mathf.Clamp(searchDirection.y, -1, 1) * i;
+            var matches = new List<PieceItem>();
+            var startPiece = _boardCreator.IsWithinBounds(startX, startY)
+                ? _boardCreator.PieceItems[startX, startY]
+                : null;
+            if (startPiece == null) return matches;
 
-            if (!_boardCreator.IsWithinBounds(nextX, nextY)) break;
+            matches.Add(startPiece);
 
-            var nextPiece = _boardCreator.PieceItems[nextX, nextY];
-            if (nextPiece.poolItemType == startPiece.poolItemType)
+            var maxLength = (searchDirection.x != 0) ? _boardCreator.width : _boardCreator.height;
+
+            for (var i = 1; i < maxLength; i++)
             {
-                matches.Add(nextPiece);
+                var nextX = startX + (int)Mathf.Clamp(searchDirection.x, -1, 1) * i;
+                var nextY = startY + (int)Mathf.Clamp(searchDirection.y, -1, 1) * i;
+
+                if (!_boardCreator.IsWithinBounds(nextX, nextY)) break;
+
+                var nextPiece = _boardCreator.PieceItems[nextX, nextY];
+                if (nextPiece != null && nextPiece.poolItemType == startPiece.poolItemType)
+                {
+                    matches.Add(nextPiece);
+                }
+                else
+                {
+                    break;
+                }
             }
-            else
-            {
-                break;
-            }
+
+            return matches.Count >= minLength ? matches : new List<PieceItem>();
+        }
+    }
+    
+    public bool FindAndClearMatches(Tile clickedTile, Tile targetTile)
+    {
+        var allMatches = new HashSet<PieceItem>();
+        allMatches.UnionWith(FindMatchesAt(clickedTile.rowIndex, clickedTile.columnIndex,
+            Vector2.right));
+        allMatches.UnionWith(
+            FindMatchesAt(clickedTile.rowIndex, clickedTile.columnIndex, Vector2.up));
+        allMatches.UnionWith(FindMatchesAt(targetTile.rowIndex, targetTile.columnIndex,
+            Vector2.right));
+        allMatches.UnionWith(FindMatchesAt(targetTile.rowIndex, targetTile.columnIndex, Vector2.up));
+        if (allMatches.Count <= 0) return false;
+        foreach (var piece in allMatches)
+        {
+            ClearPieceAt(piece.rowIndex, piece.columnIndex);
         }
 
-        return matches.Count >= minLength ? matches : new List<PieceItem>();
+        return true;
+    }
+    
+    private void ClearPieceAt(int x, int y)
+    {
+        var pieceToClear = _boardCreator.PieceItems[x, y];
+
+        if (pieceToClear != null)
+        {
+            _boardCreator.PieceItems[x, y] = null;
+            _boardCreator.Tiles[x, y] = null;
+            _pool.DeactivateObject(pieceToClear.gameObject, pieceToClear.poolItemType);
+        }
+
+        HighlightTileOff(x, y);
     }
 
     private void HighlightMatches()
     {
-        ResetHighlight();
+        var allMatchedPieces = new HashSet<PieceItem>();
 
-        for (int x = 0; x < _boardCreator.width; x++)
+        for (var x = 0; x < _boardCreator.width; x++)
         {
-            for (int y = 0; y < _boardCreator.height; y++)
+            for (var y = 0; y < _boardCreator.height; y++)
             {
-                List<PieceItem> horizontalMatches = FindMatches(x, y, Vector2.right);
-                List<PieceItem> verticalMatches = FindMatches(x, y, Vector2.up);
+                var horizontalMatches = FindMatchesAt(x, y, Vector2.right);
+                var verticalMatches = FindMatchesAt(x, y, Vector2.up);
 
-                HighlightMatchedPieces(horizontalMatches);
-                HighlightMatchedPieces(verticalMatches);
+                foreach (var piece in horizontalMatches)
+                {
+                    allMatchedPieces.Add(piece);
+                }
+
+                foreach (var piece in verticalMatches)
+                {
+                    allMatchedPieces.Add(piece);
+                }
             }
         }
-    }
 
-    private void ResetHighlight()
-    {
-        for (int x = 0; x < _boardCreator.width; x++)
+        foreach (var piece in allMatchedPieces)
         {
-            for (int y = 0; y < _boardCreator.height; y++)
+            if (_itemTypeColors.TryGetValue(piece.poolItemType, out var color))
             {
-                _tileRenderers[x, y].color = new Color(_tileRenderers[x, y].color.r, _tileRenderers[x, y].color.g,
-                    _tileRenderers[x, y].color.b, 1);
-            }
-        }
-    }
-
-    private void HighlightMatchedPieces(List<PieceItem> matchedPieces)
-    {
-        foreach (PieceItem piece in matchedPieces)
-        {
-            if (_itemTypeColors.TryGetValue(piece.poolItemType, out Color color))
-            {
-                _tileRenderers[piece.rowIndex, piece.columnIndex].color = color;
+                HighlightTileOn(piece.rowIndex, piece.columnIndex, color);
             }
             else
             {
                 Debug.LogWarning("Color not defined for pool item type: " + piece.poolItemType);
             }
         }
+
+        for (var x = 0; x < _boardCreator.width; x++)
+        {
+            for (var y = 0; y < _boardCreator.height; y++)
+            {
+                if (!allMatchedPieces.Any(p => p.rowIndex == x && p.columnIndex == y))
+                {
+                    HighlightTileOff(x, y);
+                }
+            }
+        }
+    }
+
+    public void HighlightTileOff(int x, int y)
+    {
+        var spriteRenderer = _tileRenderers[x, y];
+        spriteRenderer.color = new Color(0.439f, 0f, 0.420f, 1f);
+    }
+
+    private void HighlightTileOn(int x, int y, Color color)
+    {
+        var spriteRenderer = _tileRenderers[x, y];
+        spriteRenderer.color = color;
     }
 
     private void OnDisable()
     {
         EventManager.OnFindMatch -= OnFindMatch;
+        EventManager.OnMovedItem -= OnMovedItem;
+
     }
 }

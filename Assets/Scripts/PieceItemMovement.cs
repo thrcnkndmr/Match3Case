@@ -45,6 +45,7 @@ public class PieceItemMovement : MonoBehaviour
             {
                 _boardCreator.PlacementOfItem(_pieceItem, (int)destination.x, (int)destination.y,_pieceItem.poolItemType);
                 _boardMovement.isMoving = false;
+                EventManager.OnMovedItemEventInvoker();
             });
 
         moveSequence.Play();

@@ -7,4 +7,5 @@ public class BoardManager : MonoSingleton<BoardManager>
 {
    public BoardCreator boardCreator;
    public BoardMovement boardMovement;
+   public BoardMatchFinding boardMatchFinding;
 }
