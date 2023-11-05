@@ -56,72 +56,127 @@ public class BoardMatchFinding : MonoBehaviour
         InitializeTileRenderers();
     }
 
-    public List<PieceItem> FindMatchesAt(int startX, int startY, Vector2 searchDirection, int minLength = 3)
+    public List<PieceItem> FindMatches(int startX, int startY, Vector2 searchDirection, int minLength = 3)
     {
+        List<PieceItem> matches = new List<PieceItem>();
+
+        PieceItem startPiece = null;
+
+        if (_boardCreator.IsWithinBounds(startX, startY))
         {
-            var matches = new List<PieceItem>();
-            var startPiece = _boardCreator.IsWithinBounds(startX, startY)
-                ? _boardCreator.PieceItems[startX, startY]
-                : null;
-            if (startPiece == null) return matches;
+            startPiece = _boardCreator.PieceItems[startX, startY];
+        }
 
+        if (startPiece != null)
+        {
             matches.Add(startPiece);
+        }
 
-            var maxLength = (searchDirection.x != 0) ? _boardCreator.width : _boardCreator.height;
+        else
+        {
+            return null;
+        }
 
-            for (var i = 1; i < maxLength; i++)
+        int nextX;
+        int nextY;
+
+        int maxValue = (_boardCreator.width > _boardCreator.height) ? _boardCreator.width : _boardCreator.height;
+
+        for (int i = 1; i < maxValue - 1; i++)
+        {
+            nextX = startX + (int)Mathf.Clamp(searchDirection.x, -1, 1) * i;
+            nextY = startY + (int)Mathf.Clamp(searchDirection.y, -1, 1) * i;
+
+            if (!_boardCreator.IsWithinBounds(nextX, nextY))
             {
-                var nextX = startX + (int)Mathf.Clamp(searchDirection.x, -1, 1) * i;
-                var nextY = startY + (int)Mathf.Clamp(searchDirection.y, -1, 1) * i;
+                break;
+            }
 
-                if (!_boardCreator.IsWithinBounds(nextX, nextY)) break;
+            PieceItem nextPiece = _boardCreator.PieceItems[nextX, nextY];
 
-                var nextPiece = _boardCreator.PieceItems[nextX, nextY];
-                if (nextPiece != null && nextPiece.poolItemType == startPiece.poolItemType)
+            if (nextPiece == null)
+            {
+                break;
+            }
+            else
+            {
+                if (nextPiece.poolItemType == startPiece.poolItemType && !matches.Contains(nextPiece))
                 {
                     matches.Add(nextPiece);
                 }
+
                 else
                 {
                     break;
                 }
             }
-
-            return matches.Count >= minLength ? matches : new List<PieceItem>();
         }
-    }
-    
-    public bool FindAndClearMatches(Tile clickedTile, Tile targetTile)
-    {
-        var allMatches = new HashSet<PieceItem>();
-        allMatches.UnionWith(FindMatchesAt(clickedTile.rowIndex, clickedTile.columnIndex,
-            Vector2.right));
-        allMatches.UnionWith(
-            FindMatchesAt(clickedTile.rowIndex, clickedTile.columnIndex, Vector2.up));
-        allMatches.UnionWith(FindMatchesAt(targetTile.rowIndex, targetTile.columnIndex,
-            Vector2.right));
-        allMatches.UnionWith(FindMatchesAt(targetTile.rowIndex, targetTile.columnIndex, Vector2.up));
-        if (allMatches.Count <= 0) return false;
-        foreach (var piece in allMatches)
+
+        if (matches.Count >= minLength)
         {
-            ClearPieceAt(piece.rowIndex, piece.columnIndex);
+            return matches;
         }
 
-        return true;
+        return null;
     }
-    
-    private void ClearPieceAt(int x, int y)
-    {
-        var pieceToClear = _boardCreator.PieceItems[x, y];
 
-        if (pieceToClear != null)
+    private List<PieceItem> FindVerticalMatches(int startX, int startY, int minLength = 3)
+    {
+        List<PieceItem> upwardMatches = FindMatches(startX, startY, new Vector2(0, 1), 2);
+        List<PieceItem> downwardMatches = FindMatches(startX, startY, new Vector2(0, -1), 2);
+
+        if (upwardMatches == null)
         {
-            _boardCreator.PieceItems[x, y] = null;
-            _boardCreator.Tiles[x, y] = null;
-            _pool.DeactivateObject(pieceToClear.gameObject, pieceToClear.poolItemType);
+            upwardMatches = new List<PieceItem>();
         }
 
-        HighlightTileOff(x, y);
+        if (downwardMatches == null)
+        {
+            downwardMatches = new List<PieceItem>();
+        }
+
+        var combinedMatches = upwardMatches.Union(downwardMatches).ToList();
+
+        return (combinedMatches.Count >= minLength) ? combinedMatches : null;
+    }
+
+    private List<PieceItem> FindHorizontalMatches(int startX, int startY, int minLength = 3)
+    {
+        List<PieceItem> rightMatches = FindMatches(startX, startY, new Vector2(1, 0), 2);
+        List<PieceItem> leftMatches = FindMatches(startX, startY, new Vector2(-1, 0), 2);
+
+        if (rightMatches == null)
+        {
+            rightMatches = new List<PieceItem>();
+        }
+
+        if (leftMatches == null)
+        {
+            leftMatches = new List<PieceItem>();
+        }
+
+        var combinedMatches = rightMatches.Union(leftMatches).ToList();
+
+        return (combinedMatches.Count >= minLength) ? combinedMatches : null;
+    }
+
+    public List<PieceItem> FindMatchesAt(int x, int y, int minLength = 3)
+    {
+        List<PieceItem> horizMatches = FindHorizontalMatches(x, y, minLength);
+        List<PieceItem> vertMatches = FindVerticalMatches(x, y, minLength);
+
+        if (horizMatches == null)
+        {
+            horizMatches = new List<PieceItem>();
+        }
+
+        if (vertMatches == null)
+        {
+            vertMatches = new List<PieceItem>();
+        }
+
+        var combinedMatches = horizMatches.Union(vertMatches).ToList();
+        return combinedMatches;
     }
 
     private void HighlightMatches()
@@ -132,8 +187,8 @@ public class BoardMatchFinding : MonoBehaviour
         {
             for (var y = 0; y < _boardCreator.height; y++)
             {
-                var horizontalMatches = FindMatchesAt(x, y, Vector2.right);
-                var verticalMatches = FindMatchesAt(x, y, Vector2.up);
+                var horizontalMatches = FindMatchesAt(x, y);
+                var verticalMatches = FindMatchesAt(x, y);
 
                 foreach (var piece in horizontalMatches)
                 {
@@ -171,6 +226,19 @@ public class BoardMatchFinding : MonoBehaviour
         }
     }
 
+    public void ClearPieceAt(int x, int y)
+    {
+        var pieceToClear = _boardCreator.PieceItems[x, y];
+
+        if (pieceToClear != null)
+        {
+            _boardCreator.PieceItems[x, y] = null;
+            _pool.DeactivateObject(pieceToClear.gameObject, pieceToClear.poolItemType);
+        }
+
+        HighlightTileOff(x, y);
+    }
+
     public void HighlightTileOff(int x, int y)
     {
         var spriteRenderer = _tileRenderers[x, y];
@@ -187,6 +255,5 @@ public class BoardMatchFinding : MonoBehaviour
     {
         EventManager.OnFindMatch -= OnFindMatch;
         EventManager.OnMovedItem -= OnMovedItem;
-
     }
 }

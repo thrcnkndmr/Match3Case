@@ -529,9 +529,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 897866802}
+  - component: {fileID: 897866804}
   - component: {fileID: 897866801}
   - component: {fileID: 897866803}
-  - component: {fileID: 897866804}
   - component: {fileID: 897866805}
   m_Layer: 0
   m_Name: Board
@@ -598,6 +598,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   boardCreator: {fileID: 897866801}
   boardMovement: {fileID: 897866803}
+  boardMatchFinding: {fileID: 897866805}
 --- !u!114 &897866805
 MonoBehaviour:
   m_ObjectHideFlags: 0

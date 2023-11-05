@@ -65,23 +65,42 @@ public class BoardMovement : MonoBehaviour
             clickedPiece.GetComponent<PieceItemMovement>().MoveAction(targetTile.rowIndex, targetTile.columnIndex, t);
             targetPiece.GetComponent<PieceItemMovement>().MoveAction(clickedTile.rowIndex, clickedTile.columnIndex, t);
 
+            yield return new WaitForSeconds(1);
 
-            yield return new WaitForSeconds(0.6f);
+            var clickedPieceMatches = _boardMatchFinding.FindMatchesAt(clickedTile.rowIndex, clickedTile.columnIndex);
+            var targetPieceMatches = _boardMatchFinding.FindMatchesAt(targetTile.rowIndex, targetTile.columnIndex);
 
-            if (!_boardMatchFinding.FindAndClearMatches(clickedTile, targetTile))
+            if (targetPieceMatches.Count == 0 && clickedPieceMatches.Count == 0)
             {
                 clickedPiece.GetComponent<PieceItemMovement>()
                     .MoveAction(clickedTile.rowIndex, clickedTile.columnIndex, t);
                 targetPiece.GetComponent<PieceItemMovement>()
                     .MoveAction(targetTile.rowIndex, targetTile.columnIndex, t);
-                yield return new WaitForSeconds(0.6f);
             }
+            else
+            {
+                yield return new WaitForSeconds(1);
+
+
+                foreach (var piece in clickedPieceMatches)
+                {
+                    _boardMatchFinding.ClearPieceAt(piece.rowIndex, piece.columnIndex);
+                }
+
+                foreach (var piece in targetPieceMatches)
+                {
+                    _boardMatchFinding.ClearPieceAt(piece.rowIndex, piece.columnIndex);
+                }
+
+
+                //HighlightMatchesAt(clickedTile.xIndex,clickedTile.yIndex);
+                //HighlightMatchesAt(targetTile.xIndex,targetTile.yIndex);
+            }
+
+            _clickedTile = null;
+            _targetTile = null;
         }
-
-        _clickedTile = null;
-        _targetTile = null;
     }
-
 
     private bool IsNextTo(Tile start, Tile end)
     {

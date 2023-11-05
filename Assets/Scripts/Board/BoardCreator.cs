@@ -5,7 +5,7 @@ using UnityEngine;
 public class BoardCreator : MonoBehaviour
 {
     public int width;
-   public int height;
+    public int height;
 
     private Pool _pool;
 
@@ -107,7 +107,15 @@ public class BoardCreator : MonoBehaviour
         {
             for (var j = 0; j < height; j++)
             {
-                var randomItem = GetRandomItem();
+                PoolItemType randomItem;
+                do
+                {
+                    randomItem = GetRandomItem();
+                } while ((i > 1 && _pieceItems[i - 1, j]?.poolItemType == randomItem &&
+                          _pieceItems[i - 2, j]?.poolItemType == randomItem)
+                         || (j > 1 && _pieceItems[i, j - 1]?.poolItemType == randomItem &&
+                             _pieceItems[i, j - 2]?.poolItemType == randomItem));
+
                 var newItem = _pool.SpawnObject(Vector3.zero, randomItem, null, Quaternion.identity);
                 PlacementOfItem(newItem.GetComponent<PieceItem>(), i, j, randomItem);
             }
