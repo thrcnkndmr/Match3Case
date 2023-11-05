@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class BoardCreator : MonoBehaviour
 {
-    [SerializeField] private int width;
-    [SerializeField] private int height;
+    public int width;
+   public int height;
 
     private Pool _pool;
 
@@ -36,6 +36,7 @@ public class BoardCreator : MonoBehaviour
     private void Start()
     {
         EventManager.OnStartGameInvoker();
+        EventManager.OnFindMatchInvoker();
     }
 
     private void BoardInitialize()
@@ -81,7 +82,7 @@ public class BoardCreator : MonoBehaviour
         return tileItemsList[randomItemIndex];
     }
 
-    public void PlacementOfItem(PieceItem pieceItem, int x, int y)
+    public void PlacementOfItem(PieceItem pieceItem, int x, int y, PoolItemType poolItemType)
     {
         var itemTransform = pieceItem.transform;
         itemTransform.position = new Vector3(x, y, -1);
@@ -92,10 +93,10 @@ public class BoardCreator : MonoBehaviour
             _pieceItems[x, y] = pieceItem;
         }
 
-        pieceItem.SetCoordinates(x, y);
+        pieceItem.SetCoordinates(x, y, poolItemType);
     }
 
-    private bool IsWithinBounds(int x, int y)
+    public bool IsWithinBounds(int x, int y)
     {
         return (x >= 0 && x < width && y >= 0 && y < height);
     }
@@ -106,8 +107,9 @@ public class BoardCreator : MonoBehaviour
         {
             for (var j = 0; j < height; j++)
             {
-                var randomItem = _pool.SpawnObject(Vector3.zero, GetRandomItem(), null, Quaternion.identity);
-                PlacementOfItem(randomItem.GetComponent<PieceItem>(), i, j);
+                var randomItem = GetRandomItem();
+                var newItem = _pool.SpawnObject(Vector3.zero, randomItem, null, Quaternion.identity);
+                PlacementOfItem(newItem.GetComponent<PieceItem>(), i, j, randomItem);
             }
         }
     }

@@ -43,7 +43,7 @@ public class PieceItemMovement : MonoBehaviour
             .OnStart(() => _boardMovement.isMoving = true)
             .OnComplete(() =>
             {
-                _boardCreator.PlacementOfItem(_pieceItem, (int)destination.x, (int)destination.y);
+                _boardCreator.PlacementOfItem(_pieceItem, (int)destination.x, (int)destination.y,_pieceItem.poolItemType);
                 _boardMovement.isMoving = false;
             });
 

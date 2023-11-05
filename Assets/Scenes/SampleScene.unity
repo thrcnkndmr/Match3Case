@@ -532,6 +532,7 @@ GameObject:
   - component: {fileID: 897866801}
   - component: {fileID: 897866803}
   - component: {fileID: 897866804}
+  - component: {fileID: 897866805}
   m_Layer: 0
   m_Name: Board
   m_TagString: Untagged
@@ -597,6 +598,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   boardCreator: {fileID: 897866801}
   boardMovement: {fileID: 897866803}
+--- !u!114 &897866805
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 897866800}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06af59339d3596940acb3d84b394d7e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &979216114
 GameObject:
   m_ObjectHideFlags: 0
