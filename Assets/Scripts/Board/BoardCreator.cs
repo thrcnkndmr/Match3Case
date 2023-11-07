@@ -40,12 +40,18 @@ public class BoardCreator : MonoBehaviour
         EventManager.OnFindMatchInvoker();
     }
 
+    {
+        _pool = Pool.Instance;
+        _boardMatchFinding = BoardManager.Instance.boardMatchFinding;
+        _boardMovement = BoardManager.Instance.boardMovement;
+    }
     private void BoardInitialize()
     {
         CreatingNewArray(width, height);
         CreatingTiles();
         AddingItemsToList();
         FillRandomToBoard();
+        
     }
 
     private void AddingItemsToList()
@@ -136,7 +142,7 @@ public class BoardCreator : MonoBehaviour
                     if (PieceItems[column, j] == null) continue;
                     if (PieceItems[column, j].TryGetComponent(out PieceItemMovement pieceItemMovement))
                     {
-                        pieceItemMovement.MoveAction(column, i, collapseTime);
+                        pieceItemMovement.MoveAction(column, i, collapseTime * (i-j));
                         PieceItems[column, i] = PieceItems[column, j];
 
                         PieceItems[column, i].SetCoordinates(column, i, PieceItems[column, i].poolItemType);
@@ -155,7 +161,7 @@ public class BoardCreator : MonoBehaviour
         return movingPieces;
     }
 
-    public List<PieceItem> CollapseColumn(IEnumerable<PieceItem> gamePieces)
+    private List<PieceItem> CollapseColumn(IEnumerable<PieceItem> gamePieces)
     {
         var movingPieces = new List<PieceItem>();
         var columnsToCollapse = GetColumns(gamePieces);
@@ -174,8 +180,116 @@ public class BoardCreator : MonoBehaviour
         return columns;
     }
 
+    public void ClearAndRefillBoard(List<PieceItem> gamePieces)
+    {
+        StartCoroutine(ClearAndRefillBoardRoutine(gamePieces));
+    }
+
+    private IEnumerator ClearAndRefillBoardRoutine(List<PieceItem> gamePieces)
+    {
+
+        _boardMovement.canPlayerTouch = false;
+        var matches = gamePieces;
+
+        do
+        {
+            yield return StartCoroutine(ClearAndCollapseRoutine(matches));
+            yield return null;
+
+            //refill
+           RefillBoard();
+            matches = _boardMatchFinding.FindAllMatches();
+
+            yield return new WaitForSeconds(0.5f);
+        }
+        while (matches.Count != 0);
+
+        _boardMovement.canPlayerTouch = true;
+
+    }
+
+    private IEnumerator ClearAndCollapseRoutine(List<PieceItem> gamePieces)
+    {
+        var movingPieces = new List<PieceItem>();
+        var matches = new List<PieceItem>();
+
+        _boardMatchFinding.HighlightPieces(gamePieces);
+        yield return new WaitForSeconds(0.25f);
+
+        bool isFinished = false;
+
+        while (!isFinished)
+        {
+            foreach (var piece in gamePieces)
+            {
+                _boardMatchFinding.ClearPieceAt(piece.rowIndex,piece.columnIndex);
+            }
+        
+            yield return new WaitForSeconds(0.25f);
+            movingPieces = CollapseColumn(gamePieces);
+        
+            while (!IsCollapsed(movingPieces))
+            {
+                yield return null;
+            }
+
+            matches = _boardMatchFinding.FindMatchesAt(movingPieces);
+
+            if (matches.Count == 0)
+            {
+                isFinished = true;
+              
+            }
+            else
+            {
+                yield return StartCoroutine(ClearAndCollapseRoutine(matches));
+            }
+        }
+    }
+
+
+    private static bool IsCollapsed(List<PieceItem> gamePieces)
+    {
+        foreach (var piece in gamePieces)
+        {
+
+            if (piece != null)
+            {
+                if (piece.transform.position.y - (float)piece.columnIndex > 0.001f)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+    
+    private void FillColumnFromAbove(int column)
+    {
+        for (var y = height - 1; y >= 0; y--)
+        {
+            if (_pieceItems[column, y] != null) continue;
+            var randomItemType = GetRandomItem();
+            var spawnPosition = new Vector3(column, height + y, 0); 
+            var newPiece = _pool.SpawnObject(spawnPosition, randomItemType, null, Quaternion.identity).GetComponent<PieceItem>();
+            PlacementOfItem(newPiece, column, y, randomItemType);
+            newPiece.GetComponent<PieceItemMovement>().MoveAction(column, y, 0.5f);
+        }
+    }
+
+
+    private void RefillBoard()
+    {
+        for (int column = 0; column < width; column++)
+        {
+            FillColumnFromAbove(column);
+        }
+    }
+
+
     private void OnDisable()
     {
         EventManager.OnStartGameEvent -= OnStartGame;
     }
-}
+} 

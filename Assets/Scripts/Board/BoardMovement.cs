@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using DG.Tweening;
 
@@ -12,9 +13,12 @@ public class BoardMovement : MonoBehaviour
     [SerializeField] private float swapTime;
 
     public bool isMoving;
+    public bool canPlayerTouch = true;
+
 
     private BoardCreator _boardCreator;
     private BoardMatchFinding _boardMatchFinding;
+    
 
     private void Awake()
     {
@@ -58,6 +62,7 @@ public class BoardMovement : MonoBehaviour
 
     private IEnumerator SwitchTilesRoutine(Tile clickedTile, Tile targetTile, float t)
     {
+        if (!canPlayerTouch) yield break;
         var clickedPiece = _boardCreator.PieceItems[clickedTile.rowIndex, clickedTile.columnIndex];
         var targetPiece = _boardCreator.PieceItems[targetTile.rowIndex, targetTile.columnIndex];
         if (targetPiece.TryGetComponent(out PieceItemMovement targetPieceItemMovement) &&
@@ -80,25 +85,15 @@ public class BoardMovement : MonoBehaviour
             }
             else
             {
-                foreach (var piece in clickedPieceMatches)
-                {
-                    _boardMatchFinding.ClearPieceAt(piece.rowIndex, piece.columnIndex);
-                }
-
-                foreach (var piece in targetPieceMatches)
-                {
-                    _boardMatchFinding.ClearPieceAt(piece.rowIndex, piece.columnIndex);
-                }
-
-                _boardCreator.CollapseColumn(clickedPieceMatches);
-                _boardCreator.CollapseColumn(targetPieceMatches);
-                //HighlightMatchesAt(clickedTile.xIndex,clickedTile.yIndex);
-                //HighlightMatchesAt(targetTile.xIndex,targetTile.yIndex);
+                yield return new WaitForSeconds(t + 0.1f);
+                _boardCreator.ClearAndRefillBoard(clickedPieceMatches.Union(targetPieceMatches).ToList());
             }
 
-            _clickedTile = null;
-            _targetTile = null;
+                
+                
         }
+        _clickedTile = null;
+        _targetTile = null;
     }
 
     private bool IsNextTo(Tile start, Tile end)

@@ -7,6 +7,7 @@ public class BoardMatchFinding : MonoBehaviour
     private BoardCreator _boardCreator;
     private SpriteRenderer[,] _tileRenderers;
     private Pool _pool;
+    private Color _defaultTileColor;
 
 
     private readonly Dictionary<PoolItemType, Color> _itemTypeColors = new Dictionary<PoolItemType, Color>
@@ -31,6 +32,7 @@ public class BoardMatchFinding : MonoBehaviour
     private void InitializeTileRenderers()
     {
         _tileRenderers = new SpriteRenderer[_boardCreator.width, _boardCreator.height];
+        _defaultTileColor = new Color(112/255f, 0/255f, 107/255f, 1f);
         for (var x = 0; x < _boardCreator.width; x++)
         {
             for (var y = 0; y < _boardCreator.height; y++)
@@ -178,53 +180,36 @@ public class BoardMatchFinding : MonoBehaviour
         var combinedMatches = horizMatches.Union(vertMatches).ToList();
         return combinedMatches;
     }
-
-    private void HighlightMatches()
+    
+    public List<PieceItem> FindMatchesAt(List<PieceItem> gamePieces, int minLength = 3)
     {
-        var allMatchedPieces = new HashSet<PieceItem>();
+        List<PieceItem> matches = new List<PieceItem>();
 
-        for (var x = 0; x < _boardCreator.width; x++)
+        foreach (PieceItem piece in gamePieces)
         {
-            for (var y = 0; y < _boardCreator.height; y++)
-            {
-                var horizontalMatches = FindMatchesAt(x, y);
-                var verticalMatches = FindMatchesAt(x, y);
-
-                foreach (var piece in horizontalMatches)
-                {
-                    allMatchedPieces.Add(piece);
-                }
-
-                foreach (var piece in verticalMatches)
-                {
-                    allMatchedPieces.Add(piece);
-                }
-            }
+            matches = matches.Union(FindMatchesAt(piece.rowIndex, piece.columnIndex, minLength)).ToList();
         }
 
-        foreach (var piece in allMatchedPieces)
-        {
-            if (_itemTypeColors.TryGetValue(piece.poolItemType, out var color))
-            {
-                HighlightTileOn(piece.rowIndex, piece.columnIndex, color);
-            }
-            else
-            {
-                Debug.LogWarning("Color not defined for pool item type: " + piece.poolItemType);
-            }
-        }
-
-        for (var x = 0; x < _boardCreator.width; x++)
-        {
-            for (var y = 0; y < _boardCreator.height; y++)
-            {
-                if (!allMatchedPieces.Any(p => p.rowIndex == x && p.columnIndex == y))
-                {
-                    HighlightTileOff(x, y);
-                }
-            }
-        }
+        return matches;
     }
+    
+    public List<PieceItem> FindAllMatches()
+    {
+        List<PieceItem> combinedMatches = new List<PieceItem>();
+
+        for (int i = 0; i < _boardCreator.width; i++)
+        {
+            for (int j = 0; j < _boardCreator.height; j++)
+            {
+                List<PieceItem> matches = FindMatchesAt(i, j);
+                combinedMatches = combinedMatches.Union(matches).ToList();
+            }
+        }
+        return combinedMatches;
+    }
+
+    
+    
 
     public void ClearPieceAt(int x, int y)
     {
@@ -239,16 +224,27 @@ public class BoardMatchFinding : MonoBehaviour
         HighlightTileOff(x, y);
     }
 
-    public void HighlightTileOff(int x, int y)
+    private void HighlightTileOff(int x, int y)
     {
         var spriteRenderer = _tileRenderers[x, y];
-        spriteRenderer.color = new Color(0.439f, 0f, 0.420f, 1f);
+        spriteRenderer.color =_defaultTileColor;
     }
 
-    private void HighlightTileOn(int x, int y, Color color)
+    private void HighlightTileOn(int x, int y, Color col)
     {
         var spriteRenderer = _tileRenderers[x, y];
-        spriteRenderer.color = color;
+        spriteRenderer.color = col;
+    }
+    
+    public void HighlightPieces(List<PieceItem> gamePieces)
+    {
+        foreach (var piece in gamePieces)
+        {
+            if (piece != null)
+            {
+                HighlightTileOn(piece.rowIndex, piece.columnIndex,_itemTypeColors[piece.poolItemType]);
+            }
+        }
     }
     
 
