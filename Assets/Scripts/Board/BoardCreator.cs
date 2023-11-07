@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -9,6 +10,8 @@ public class BoardCreator : MonoBehaviour
     public int height;
 
     private Pool _pool;
+    private BoardMatchFinding _boardMatchFinding;
+    private BoardMovement _boardMovement;
 
     private Tile[,] _tiles;
     private PieceItem[,] _pieceItems;
@@ -21,7 +24,7 @@ public class BoardCreator : MonoBehaviour
 
     private void Awake()
     {
-        _pool = Pool.Instance;
+        Init();
     }
 
     private void OnEnable()
@@ -40,6 +43,7 @@ public class BoardCreator : MonoBehaviour
         EventManager.OnFindMatchInvoker();
     }
 
+    private void Init()
     {
         _pool = Pool.Instance;
         _boardMatchFinding = BoardManager.Instance.boardMatchFinding;
