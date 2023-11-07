@@ -250,6 +250,8 @@ public class BoardMatchFinding : MonoBehaviour
         var spriteRenderer = _tileRenderers[x, y];
         spriteRenderer.color = color;
     }
+    
+
 
     private void OnDisable()
     {

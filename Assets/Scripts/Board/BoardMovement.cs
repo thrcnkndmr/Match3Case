@@ -60,28 +60,26 @@ public class BoardMovement : MonoBehaviour
     {
         var clickedPiece = _boardCreator.PieceItems[clickedTile.rowIndex, clickedTile.columnIndex];
         var targetPiece = _boardCreator.PieceItems[targetTile.rowIndex, targetTile.columnIndex];
-        if (targetPiece != null && clickedPiece != null)
+        if (targetPiece.TryGetComponent(out PieceItemMovement targetPieceItemMovement) &&
+            clickedPiece.TryGetComponent(out PieceItemMovement clickedPieceItemMovement))
         {
-            clickedPiece.GetComponent<PieceItemMovement>().MoveAction(targetTile.rowIndex, targetTile.columnIndex, t);
-            targetPiece.GetComponent<PieceItemMovement>().MoveAction(clickedTile.rowIndex, clickedTile.columnIndex, t);
+            clickedPieceItemMovement.MoveAction(targetTile.rowIndex, targetTile.columnIndex, t);
+            targetPieceItemMovement.MoveAction(clickedTile.rowIndex, clickedTile.columnIndex, t);
 
-            yield return new WaitForSeconds(1);
+            yield return new WaitForSeconds(t + 0.1f);
 
             var clickedPieceMatches = _boardMatchFinding.FindMatchesAt(clickedTile.rowIndex, clickedTile.columnIndex);
             var targetPieceMatches = _boardMatchFinding.FindMatchesAt(targetTile.rowIndex, targetTile.columnIndex);
 
             if (targetPieceMatches.Count == 0 && clickedPieceMatches.Count == 0)
             {
-                clickedPiece.GetComponent<PieceItemMovement>()
+                clickedPieceItemMovement
                     .MoveAction(clickedTile.rowIndex, clickedTile.columnIndex, t);
-                targetPiece.GetComponent<PieceItemMovement>()
+                targetPieceItemMovement
                     .MoveAction(targetTile.rowIndex, targetTile.columnIndex, t);
             }
             else
             {
-                yield return new WaitForSeconds(1);
-
-
                 foreach (var piece in clickedPieceMatches)
                 {
                     _boardMatchFinding.ClearPieceAt(piece.rowIndex, piece.columnIndex);
@@ -92,7 +90,8 @@ public class BoardMovement : MonoBehaviour
                     _boardMatchFinding.ClearPieceAt(piece.rowIndex, piece.columnIndex);
                 }
 
-
+                _boardCreator.CollapseColumn(clickedPieceMatches);
+                _boardCreator.CollapseColumn(targetPieceMatches);
                 //HighlightMatchesAt(clickedTile.xIndex,clickedTile.yIndex);
                 //HighlightMatchesAt(targetTile.xIndex,targetTile.yIndex);
             }

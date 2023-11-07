@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 
@@ -120,6 +121,57 @@ public class BoardCreator : MonoBehaviour
                 PlacementOfItem(newItem.GetComponent<PieceItem>(), i, j, randomItem);
             }
         }
+    }
+
+    private IEnumerable<PieceItem> CollapseColumn(int column, float collapseTime = 0.1f)
+    {
+        var movingPieces = new List<PieceItem>();
+
+        for (var i = 0; i < height - 1; i++)
+        {
+            if (PieceItems[column, i] == null)
+            {
+                for (var j = i + 1; j < height; j++)
+                {
+                    if (PieceItems[column, j] == null) continue;
+                    if (PieceItems[column, j].TryGetComponent(out PieceItemMovement pieceItemMovement))
+                    {
+                        pieceItemMovement.MoveAction(column, i, collapseTime);
+                        PieceItems[column, i] = PieceItems[column, j];
+
+                        PieceItems[column, i].SetCoordinates(column, i, PieceItems[column, i].poolItemType);
+
+                        if (!movingPieces.Contains(PieceItems[column, i]))
+                        {
+                            movingPieces.Add(PieceItems[column, i]);
+                        }
+
+                        PieceItems[column, j] = null;
+                        break;
+                    }
+                }
+            }
+        }
+        return movingPieces;
+    }
+
+    public List<PieceItem> CollapseColumn(IEnumerable<PieceItem> gamePieces)
+    {
+        var movingPieces = new List<PieceItem>();
+        var columnsToCollapse = GetColumns(gamePieces);
+        return columnsToCollapse.Aggregate(movingPieces, (current, column) => current.Union(CollapseColumn(column)).ToList());
+    }
+
+    private static List<int> GetColumns(IEnumerable<PieceItem> gamePieces)
+    {
+        List<int> columns = new List<int>();
+
+        foreach (var piece in gamePieces.Where(piece => !columns.Contains(piece.rowIndex)))
+        {
+            columns.Add(piece.rowIndex);
+        }
+
+        return columns;
     }
 
     private void OnDisable()
