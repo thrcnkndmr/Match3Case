@@ -46,16 +46,27 @@ public class BoardMatchFinding : MonoBehaviour
     {
         EventManager.OnFindMatch += OnFindMatch;
         EventManager.OnMovedItem += OnMovedItem;
+        EventManager.OnStartGameEvent += OnStartGame;
+        EventManager.OnLevelStart += OnLevelStart;
+    }
+
+    private void OnLevelStart()
+    {
+InitializeTileRenderers();    }
+
+    private void OnStartGame()
+    {
+       // InitializeTileRenderers();
     }
 
     private void OnMovedItem()
     {
-        throw new System.NotImplementedException();
+      Debug.Log("öylesine");
     }
 
     private void OnFindMatch()
     {
-        InitializeTileRenderers();
+        Debug.Log("deneme");
     }
 
     public List<PieceItem> FindMatches(int startX, int startY, Vector2 searchDirection, int minLength = 3)
@@ -219,6 +230,7 @@ public class BoardMatchFinding : MonoBehaviour
         {
             _boardCreator.PieceItems[x, y] = null;
             _pool.DeactivateObject(pieceToClear.gameObject, pieceToClear.poolItemType);
+            EventManager.OnFindMatchInvoker();
         }
 
         HighlightTileOff(x, y);
@@ -265,5 +277,8 @@ public class BoardMatchFinding : MonoBehaviour
     {
         EventManager.OnFindMatch -= OnFindMatch;
         EventManager.OnMovedItem -= OnMovedItem;
+        EventManager.OnStartGameEvent -= OnStartGame;
+        EventManager.OnLevelStart -= OnLevelStart;
+
     }
 }

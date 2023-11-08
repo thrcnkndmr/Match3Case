@@ -51,6 +51,7 @@ public class BoardMovement : MonoBehaviour
     private void SwitchTiles(Tile clickedTile, Tile targetTile, float time)
     {
         StartCoroutine(SwitchTilesRoutine(clickedTile, targetTile, time));
+        EventManager.OnMovedItemEventInvoker();
     }
 
     private IEnumerator SwitchTilesRoutine(Tile clickedTile, Tile targetTile, float t)

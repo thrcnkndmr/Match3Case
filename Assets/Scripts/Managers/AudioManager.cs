@@ -1,8 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
+using thrcnkndmr;
 using UnityEngine;
-
-public class AudioManager : MonoBehaviour
+public class AudioManager : MonoSingleton<AudioManager>
 {
 
     [SerializeField] private AudioClip matchSound;
@@ -10,36 +9,64 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip loseSound;
     [SerializeField] private AudioClip backgroundMusic;
 
-    private AudioSource _audioSource;
-    private AudioSource _musicSource;
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioSource musicSource;
 
     private void Awake()
     {
         var  sources = GetComponents<AudioSource>();
-        _audioSource = sources[0];
-        _musicSource = sources[1];
+        audioSource = sources[0];
+        musicSource = sources[1];
         PlayMusic(backgroundMusic);
+    }
+
+    private void OnEnable()
+    {
+        EventManager.OnFindMatch += OnFindMatch;
+        EventManager.OnLevelFail += OnLevelFail;
+        EventManager.OnLevelSuccess += OnLevelSuccess;
+    }
+
+    private void OnLevelSuccess()
+    {
+        PlayWinSound();    }
+
+    private void OnLevelFail()
+    {
+        PlayLoseSound();
+    }
+
+    private void OnFindMatch()
+    {
+        PlayMatchSound();
     }
 
     public void PlayMatchSound()
     {
-        _audioSource.PlayOneShot(matchSound);
+        audioSource.PlayOneShot(matchSound);
     }
 
     public void PlayWinSound()
     {
-        _audioSource.PlayOneShot(winSound);
+        audioSource.PlayOneShot(winSound);
     }
 
     public void PlayLoseSound()
     {
-        _audioSource.PlayOneShot(loseSound);
+        audioSource.PlayOneShot(loseSound);
     }
 
     public void PlayMusic(AudioClip musicClip)
     {
-        _musicSource.clip = musicClip;
-        _musicSource.loop = true;
-        _musicSource.Play();
+        musicSource.clip = musicClip;
+        musicSource.loop = true;
+        musicSource.Play();
+    }
+
+    private void OnDisable()
+    {
+        EventManager.OnFindMatch -= OnFindMatch;
+        EventManager.OnLevelFail-= OnLevelFail;
+        EventManager.OnLevelSuccess -= OnLevelSuccess;
     }
 }

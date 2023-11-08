@@ -29,17 +29,44 @@ public class BoardCreator : MonoBehaviour
     private void OnEnable()
     {
         EventManager.OnStartGameEvent += OnStartGame;
+        EventManager.OnLevelStart += OnLevelStart;
+    }
+
+    private void OnLevelStart()
+    {
+        BoardInitialize();
     }
 
     private void OnStartGame()
     {
-        BoardInitialize();
+       // BoardInitialize();
+       Debug.Log("dur");
     }
 
     private void Start()
     {
         EventManager.OnStartGameInvoker();
-        EventManager.OnFindMatchInvoker();
+    }
+
+    private void BoardReset()
+    {
+        for (int i = 0; i < width; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                if (_pieceItems[i, j] != null)
+                {
+                    _pool.DeactivateObject(_pieceItems[i, j].gameObject, _pieceItems[i, j].poolItemType);
+                    _pieceItems[i, j] = null;
+                }
+            
+                if (_tiles[i, j] != null)
+                {
+                    _pool.DeactivateObject(_tiles[i,j].gameObject, PoolItemType.TilePrefab);
+                    _tiles[i, j] = null;
+                }
+            }
+        }
     }
 
     private void Init()
