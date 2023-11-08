@@ -1,8 +1,18 @@
+using System;
 using thrcnkndmr;
 using UnityEngine;
 
 public class GameManager : MonoSingleton<GameManager>
 {
+    public enum GameState
+    {
+        MainMenu,
+        InPlay,
+        SuccessFail
+    }
+
+    public GameState gameState;
+
     private const string RemainingMoveCountKey = "RemainingMoveCount";
     private const string MatchCountKey = "MatchCount";
     private const string CurrentLevelKey = "CurrentLevel";
@@ -18,14 +28,30 @@ public class GameManager : MonoSingleton<GameManager>
     public int DefaultMatchCount => defaultMatchCount;
     public int DefaultRemainingMove => defaultRemainingMoveCount;
 
+    private void Awake()
+    {
+        Application.targetFrameRate = 60;
+    }
 
     private void OnEnable()
     {
         EventManager.OnLevelStart += OnLevelStart;
+        EventManager.OnStartGameEvent += OnStartGameEvent;
         EventManager.OnLevelSuccess += OnLevelSuccess;
         EventManager.OnFindMatch += OnFindMatch;
         EventManager.OnNextLevel += OnNextLevel;
         EventManager.OnMovedItem += OnMovedItem;
+        EventManager.OnLevelFail += OnLevelFail;
+    }
+
+    private void OnLevelFail()
+    {
+        gameState = GameState.SuccessFail;
+    }
+
+    private void OnStartGameEvent()
+    {
+        gameState = GameState.MainMenu;
     }
 
     private void OnMovedItem()
@@ -44,10 +70,13 @@ public class GameManager : MonoSingleton<GameManager>
     private void OnLevelStart()
     {
         LoadGame();
+        gameState = GameState.InPlay;
     }
 
     private void OnLevelSuccess()
     {
+        gameState = GameState.SuccessFail;
+
         if (remainingMoveCount > 20)
         {
             remainingMoveCount -= 5;
@@ -64,7 +93,7 @@ public class GameManager : MonoSingleton<GameManager>
     }
 
 
-    public void DecreaseMoveCount(int amount)
+    private void DecreaseMoveCount(int amount)
     {
         remainingMoveCount -= amount;
     }
@@ -131,5 +160,7 @@ public class GameManager : MonoSingleton<GameManager>
         EventManager.OnFindMatch -= OnFindMatch;
         EventManager.OnNextLevel -= OnNextLevel;
         EventManager.OnMovedItem -= OnMovedItem;
+        EventManager.OnStartGameEvent -= OnStartGameEvent;
+        EventManager.OnLevelFail -= OnLevelFail;
     }
 }

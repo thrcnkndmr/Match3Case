@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 
@@ -13,7 +14,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject levelFailUI;
     [SerializeField] private GameObject levelSuccessUI;
 
-    [SerializeField] private List<GameObject> uiList = new List<GameObject>();
+    [SerializeField] private List<GameObject> uiList = new();
 
     private GameManager _gameManager;
 
@@ -52,14 +53,13 @@ public class UIManager : MonoBehaviour
     private void OnStartGame()
     {
         ActivateUIElement(mainMenuUI);
-        StartUIGetter();
     }
 
     private void OnLevelStart()
     {
         ActivateUIElement(inGameUI);
-        StartUIGetter();
         levelText.text = "Level" + " " + PlayerPrefs.GetInt("CurrentLevel", 1);
+        DOVirtual.DelayedCall(0.1f, StartUIGetter);
     }
 
     private void OnNextLevel()
