@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Linq;
 using UnityEngine;
+
 public class BoardMovement : MonoBehaviour
 {
     private Tile _clickedTile;
@@ -11,10 +12,26 @@ public class BoardMovement : MonoBehaviour
     private BoardCreator _boardCreator;
     private BoardMatchFinding _boardMatchFinding;
     private BoardCollapseAndRefill _boardCollapseAndRefill;
-    
+
     private void Awake()
     {
         Init();
+    }
+
+    private void OnEnable()
+    {
+        EventManager.OnLevelFail += OnLevelFail;
+        EventManager.OnLevelSuccess += OnLevelSuccess;
+    }
+
+    private void OnLevelSuccess()
+    {
+        canPlayerTouch = false;
+    }
+
+    private void OnLevelFail()
+    {
+        canPlayerTouch = false;
     }
 
     private void Init()
@@ -81,10 +98,10 @@ public class BoardMovement : MonoBehaviour
             {
                 _boardCollapseAndRefill.ClearAndRefillBoard(clickedPieceMatches.Union(targetPieceMatches).ToList());
             }
+
             _clickedTile = null;
             _targetTile = null;
         }
-       
     }
 
     private static bool IsNextTo(Tile start, Tile end)
@@ -100,5 +117,11 @@ public class BoardMovement : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void OnDisable()
+    {
+        EventManager.OnLevelFail -= OnLevelFail;
+        EventManager.OnLevelSuccess -= OnLevelSuccess;
     }
 }

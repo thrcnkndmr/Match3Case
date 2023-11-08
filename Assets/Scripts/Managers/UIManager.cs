@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -45,22 +43,29 @@ public class UIManager : MonoBehaviour
         remainingMoveText.text = _gameManager.remainingMoveCount.ToString();
     }
 
+    private void StartUIGetter()
+    {
+        matchCountText.text = _gameManager.matchCount.ToString();
+        remainingMoveText.text = _gameManager.remainingMoveCount.ToString();
+    }
+
     private void OnStartGame()
     {
         ActivateUIElement(mainMenuUI);
+        StartUIGetter();
     }
 
     private void OnLevelStart()
     {
         ActivateUIElement(inGameUI);
-         matchCountText.text = PlayerPrefs.GetInt("MatchCountKey", _gameManager.DefaultMatchCount).ToString();
-         remainingMoveText.text =
-             PlayerPrefs.GetInt("RemainingMoveCount", _gameManager.DefaultRemainingMove).ToString();
-        levelText.text= "Level" + " " + PlayerPrefs.GetInt("CurrentLevel", 1).ToString();
+        StartUIGetter();
+        levelText.text = "Level" + " " + PlayerPrefs.GetInt("CurrentLevel", 1);
     }
+
     private void OnNextLevel()
     {
         ActivateUIElement(inGameUI);
+        StartUIGetter();
     }
 
     private void OnFindMatch()
@@ -75,15 +80,14 @@ public class UIManager : MonoBehaviour
 
     private void OnLevelSuccess()
     {
-       ActivateUIElement(levelSuccessUI);
+        ActivateUIElement(levelSuccessUI);
     }
 
-    public void ActivateUIElement(GameObject elementName)
+    private void ActivateUIElement(Object elementName)
     {
         foreach (var element in uiList)
         {
-
-            if ( element == elementName)
+            if (element == elementName)
             {
                 element.SetActive(true);
             }
@@ -91,11 +95,9 @@ public class UIManager : MonoBehaviour
             {
                 element.SetActive(false);
             }
-            
         }
     }
 
-   
 
     private void OnDisable()
     {
@@ -105,6 +107,5 @@ public class UIManager : MonoBehaviour
         EventManager.OnFindMatch -= OnFindMatch;
         EventManager.OnNextLevel -= OnNextLevel;
         EventManager.OnStartGameEvent -= OnStartGame;
-
     }
 }

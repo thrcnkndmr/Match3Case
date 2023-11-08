@@ -1,12 +1,9 @@
-using System.Collections;
-using System.Collections.Generic;
 using thrcnkndmr;
-using UnityEngine;
 
 public class BoardManager : MonoSingleton<BoardManager>
 {
-   public BoardCreator boardCreator;
-   public BoardMovement boardMovement;
-   public BoardMatchFinding boardMatchFinding;
-   public BoardCollapseAndRefill boardCollapseAndRefill;
+    public BoardCreator boardCreator;
+    public BoardMovement boardMovement;
+    public BoardMatchFinding boardMatchFinding;
+    public BoardCollapseAndRefill boardCollapseAndRefill;
 }

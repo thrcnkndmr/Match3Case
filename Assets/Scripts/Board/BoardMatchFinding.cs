@@ -32,7 +32,7 @@ public class BoardMatchFinding : MonoBehaviour
     private void InitializeTileRenderers()
     {
         _tileRenderers = new SpriteRenderer[_boardCreator.width, _boardCreator.height];
-        _defaultTileColor = new Color(112/255f, 0/255f, 107/255f, 1f);
+        _defaultTileColor = new Color(112 / 255f, 0 / 255f, 107 / 255f, 1f);
         for (var x = 0; x < _boardCreator.width; x++)
         {
             for (var y = 0; y < _boardCreator.height; y++)
@@ -44,30 +44,14 @@ public class BoardMatchFinding : MonoBehaviour
 
     private void OnEnable()
     {
-        EventManager.OnFindMatch += OnFindMatch;
-        EventManager.OnMovedItem += OnMovedItem;
-        EventManager.OnStartGameEvent += OnStartGame;
         EventManager.OnLevelStart += OnLevelStart;
     }
 
     private void OnLevelStart()
     {
-InitializeTileRenderers();    }
-
-    private void OnStartGame()
-    {
-       // InitializeTileRenderers();
+        InitializeTileRenderers();
     }
 
-    private void OnMovedItem()
-    {
-      Debug.Log("öylesine");
-    }
-
-    private void OnFindMatch()
-    {
-        Debug.Log("deneme");
-    }
 
     public List<PieceItem> FindMatches(int startX, int startY, Vector2 searchDirection, int minLength = 3)
     {
@@ -191,7 +175,7 @@ InitializeTileRenderers();    }
         var combinedMatches = horizMatches.Union(vertMatches).ToList();
         return combinedMatches;
     }
-    
+
     public List<PieceItem> FindMatchesAt(List<PieceItem> gamePieces, int minLength = 3)
     {
         List<PieceItem> matches = new List<PieceItem>();
@@ -203,7 +187,7 @@ InitializeTileRenderers();    }
 
         return matches;
     }
-    
+
     public List<PieceItem> FindAllMatches()
     {
         List<PieceItem> combinedMatches = new List<PieceItem>();
@@ -216,11 +200,10 @@ InitializeTileRenderers();    }
                 combinedMatches = combinedMatches.Union(matches).ToList();
             }
         }
+
         return combinedMatches;
     }
 
-    
-    
 
     public void ClearPieceAt(int x, int y)
     {
@@ -239,7 +222,7 @@ InitializeTileRenderers();    }
     private void HighlightTileOff(int x, int y)
     {
         var spriteRenderer = _tileRenderers[x, y];
-        spriteRenderer.color =_defaultTileColor;
+        spriteRenderer.color = _defaultTileColor;
     }
 
     private void HighlightTileOn(int x, int y, Color col)
@@ -247,7 +230,7 @@ InitializeTileRenderers();    }
         var spriteRenderer = _tileRenderers[x, y];
         spriteRenderer.color = col;
     }
-    
+
     public void ClearAllHighlights()
     {
         for (var x = 0; x < _boardCreator.width; x++)
@@ -261,7 +244,7 @@ InitializeTileRenderers();    }
 
     public void HighlightPieces(List<PieceItem> gamePieces)
     {
-        ClearAllHighlights(); 
+        ClearAllHighlights();
         foreach (var piece in gamePieces)
         {
             if (piece != null)
@@ -270,15 +253,10 @@ InitializeTileRenderers();    }
             }
         }
     }
-    
 
 
     private void OnDisable()
     {
-        EventManager.OnFindMatch -= OnFindMatch;
-        EventManager.OnMovedItem -= OnMovedItem;
-        EventManager.OnStartGameEvent -= OnStartGame;
         EventManager.OnLevelStart -= OnLevelStart;
-
     }
 }

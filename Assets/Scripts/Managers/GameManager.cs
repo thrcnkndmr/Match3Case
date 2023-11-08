@@ -1,36 +1,28 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using thrcnkndmr;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class GameManager : MonoSingleton<GameManager>
 {
-    
-    public const string RemainingMoveCountKey = "RemainingMoveCount";
-    public const string MatchCountKey = "MatchCount";
-    public const string CurrentLevelKey = "CurrentLevel";
-    
-   public int remainingMoveCount;
-   public int matchCount;
-    
- 
-    
+    private const string RemainingMoveCountKey = "RemainingMoveCount";
+    private const string MatchCountKey = "MatchCount";
+    private const string CurrentLevelKey = "CurrentLevel";
+
+    public int remainingMoveCount;
+    public int matchCount;
+
+
     [SerializeField] private int defaultMatchCount = 200;
     [SerializeField] private int defaultRemainingMoveCount = 50;
     [SerializeField] private int currentLevel = 1;
-    
+
     public int DefaultMatchCount => defaultMatchCount;
     public int DefaultRemainingMove => defaultRemainingMoveCount;
-   
-    
+
 
     private void OnEnable()
     {
         EventManager.OnLevelStart += OnLevelStart;
         EventManager.OnLevelSuccess += OnLevelSuccess;
-        EventManager.OnLevelFail += OnLevelFail;
         EventManager.OnFindMatch += OnFindMatch;
         EventManager.OnNextLevel += OnNextLevel;
         EventManager.OnMovedItem += OnMovedItem;
@@ -53,44 +45,42 @@ public class GameManager : MonoSingleton<GameManager>
     {
         LoadGame();
     }
-    
+
     private void OnLevelSuccess()
     {
-        throw new NotImplementedException();
+        if (remainingMoveCount > 20)
+        {
+            remainingMoveCount -= 5;
+        }
+
+        matchCount += 50;
+        SaveGame();
     }
-    
+
     private void OnFindMatch()
     {
         matchCount--;
         CheckWinOrLose();
-
     }
 
-    private void OnLevelFail()
-    {
-        Debug.Log("sun");
-    }
-    
+
     public void DecreaseMoveCount(int amount)
     {
         remainingMoveCount -= amount;
     }
+
     private void LoadGame()
     {
-        
-        matchCount = PlayerPrefs.GetInt(MatchCountKey, defaultMatchCount);
-        remainingMoveCount = PlayerPrefs.GetInt(RemainingMoveCountKey, defaultRemainingMoveCount);
         currentLevel = PlayerPrefs.GetInt(CurrentLevelKey, 1);
+        LevelStatsSetter();
     }
 
     private void LevelStatsSetter()
     {
-        if (matchCount > 20)
-        {
-            matchCount -= 5;
-        }
-        remainingMoveCount += 50;
+        remainingMoveCount = defaultRemainingMoveCount;
+        matchCount = defaultMatchCount + (currentLevel - 1) * 50;
     }
+
     private void SaveGame()
     {
         PlayerPrefs.SetInt(RemainingMoveCountKey, remainingMoveCount);
@@ -111,26 +101,25 @@ public class GameManager : MonoSingleton<GameManager>
 
     public void RestartGameButton()
     {
-        EventManager.OnLevelStartInvoker();
+        EventManager.OnRestartLevelInvoker();
     }
-    
-    
+
+
     private void CheckWinOrLose()
     {
         if (remainingMoveCount <= 0)
         {
             if (matchCount > 0)
             {
-               
-EventManager.OnLevelFailInvoker();            }
+                EventManager.OnLevelFailInvoker();
+            }
             else
             {
-               
                 EventManager.OnLevelSuccessInvoker();
             }
         }
         else if (matchCount <= 0)
-        { 
+        {
             EventManager.OnLevelSuccessInvoker();
         }
     }
@@ -139,10 +128,8 @@ EventManager.OnLevelFailInvoker();            }
     {
         EventManager.OnLevelStart -= OnLevelStart;
         EventManager.OnLevelSuccess -= OnLevelSuccess;
-        EventManager.OnLevelFail -= OnLevelFail;
         EventManager.OnFindMatch -= OnFindMatch;
         EventManager.OnNextLevel -= OnNextLevel;
         EventManager.OnMovedItem -= OnMovedItem;
-
     }
 }

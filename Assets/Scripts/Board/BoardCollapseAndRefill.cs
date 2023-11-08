@@ -21,31 +21,29 @@ public class BoardCollapseAndRefill : MonoBehaviour
         _boardMovement = BoardManager.Instance.boardMovement;
         _boardCreator = BoardManager.Instance.boardCreator;
         _pool = Pool.Instance;
-
     }
 
     private IEnumerable<PieceItem> CollapseColumn(int column, float collapseTime = 0.1f)
     {
-        var movingPieces = new HashSet<PieceItem>(); 
+        var movingPieces = new HashSet<PieceItem>();
 
-        for (int i = 0; i < _boardCreator.height - 1; i++)
+        for (var i = 0; i < _boardCreator.height - 1; i++)
         {
-            if (_boardCreator.PieceItems[column, i] == null)
+            if (_boardCreator.PieceItems[column, i] != null) continue;
+            for (var j = i + 1; j < _boardCreator.height; j++)
             {
-                for (int j = i + 1; j < _boardCreator.height; j++)
-                {
-                    if (_boardCreator.PieceItems[column, j] == null) continue;
+                if (_boardCreator.PieceItems[column, j] == null) continue;
 
-                    var piece = _boardCreator.PieceItems[column, j];
-                    _boardCreator.PieceItems[column, i] = piece;
-                    _boardCreator.PieceItems[column, j] = null;
+                var piece = _boardCreator.PieceItems[column, j];
+                _boardCreator.PieceItems[column, i] = piece;
+                _boardCreator.PieceItems[column, j] = null;
 
-                    movingPieces.Add(piece);
-                    piece.pieceItemMovement.MoveAction(column, i, collapseTime * (j - i)); 
-                    break;
-                }
+                movingPieces.Add(piece);
+                piece.pieceItemMovement.MoveAction(column, i, collapseTime * (j - i));
+                break;
             }
         }
+
         return movingPieces;
     }
 
@@ -53,12 +51,13 @@ public class BoardCollapseAndRefill : MonoBehaviour
     {
         var movingPieces = new List<PieceItem>();
         var columnsToCollapse = GetColumns(gamePieces);
-        return columnsToCollapse.Aggregate(movingPieces, (current, column) => current.Union(CollapseColumn(column)).ToList());
+        return columnsToCollapse.Aggregate(movingPieces,
+            (current, column) => current.Union(CollapseColumn(column)).ToList());
     }
 
     private static List<int> GetColumns(IEnumerable<PieceItem> gamePieces)
     {
-        List<int> columns = new List<int>();
+        var columns = new List<int>();
 
         foreach (var piece in gamePieces.Where(piece => !columns.Contains(piece.rowIndex)))
         {
@@ -75,7 +74,6 @@ public class BoardCollapseAndRefill : MonoBehaviour
 
     private IEnumerator ClearAndRefillBoardRoutine(List<PieceItem> gamePieces)
     {
-
         _boardMovement.canPlayerTouch = false;
         var matches = gamePieces;
 
@@ -84,59 +82,53 @@ public class BoardCollapseAndRefill : MonoBehaviour
             yield return StartCoroutine(ClearAndCollapseRoutine(matches));
             yield return null;
 
-           RefillBoard();
+            RefillBoard();
             matches = _boardMatchFinding.FindAllMatches();
 
             yield return new WaitForSeconds(0.5f);
-        }
-        while (matches.Count != 0);
+        } while (matches.Count != 0);
 
         _boardMovement.canPlayerTouch = true;
-
     }
 
     private IEnumerator ClearAndCollapseRoutine(List<PieceItem> gamePieces)
-   {
-    _boardMatchFinding.HighlightPieces(gamePieces);
-    yield return new WaitForSeconds(0.4f);
-
-    foreach (var piece in gamePieces)
     {
-        _boardMatchFinding.ClearPieceAt(piece.rowIndex, piece.columnIndex);
-    }
+        _boardMatchFinding.HighlightPieces(gamePieces);
+        yield return new WaitForSeconds(0.4f);
 
-    yield return new WaitForSeconds(0.4f);
+        foreach (var piece in gamePieces)
+        {
+            _boardMatchFinding.ClearPieceAt(piece.rowIndex, piece.columnIndex);
+        }
 
-    var movingPieces = CollapseColumn(gamePieces).ToList();
-    yield return new WaitUntil(() => IsCollapsed(movingPieces));
-    _boardMatchFinding.ClearAllHighlights();
-    var matches = _boardMatchFinding.FindMatchesAt(movingPieces).ToList();
-    if (matches.Count > 0)
-    {
-        yield return StartCoroutine(ClearAndCollapseRoutine(matches));
+        yield return new WaitForSeconds(0.4f);
+
+        var movingPieces = CollapseColumn(gamePieces).ToList();
+        yield return new WaitUntil(() => IsCollapsed(movingPieces));
+        _boardMatchFinding.ClearAllHighlights();
+        var matches = _boardMatchFinding.FindMatchesAt(movingPieces).ToList();
+        if (matches.Count > 0)
+        {
+            yield return StartCoroutine(ClearAndCollapseRoutine(matches));
+        }
     }
-}
 
     private static bool IsCollapsed(List<PieceItem> gamePieces)
     {
-        foreach (var piece in gamePieces)
-        {
-            if (piece != null && Mathf.Abs(piece.transform.position.y - piece.columnIndex) > 0.001f)
-            {
-                return false;
-            }
-        }
-        return true;
+        return gamePieces.All(piece =>
+            piece == null || !(Mathf.Abs(piece.transform.position.y - piece.columnIndex) > 0.001f));
     }
-    
+
     private void FillColumnFromAbove(int column)
     {
         for (var y = _boardCreator.height - 1; y >= 0; y--)
         {
             if (_boardCreator.PieceItems[column, y] != null) continue;
             var randomItemType = _boardCreator.GetRandomItem();
-            var spawnPosition = new Vector3(column, _boardCreator.height + y, 0); 
-            _pool.SpawnObject(spawnPosition, randomItemType, null, Quaternion.identity).TryGetComponent(out PieceItem pieceItem);;
+            var spawnPosition = new Vector3(column, _boardCreator.height + y, 0);
+            _pool.SpawnObject(spawnPosition, randomItemType, null, Quaternion.identity)
+                .TryGetComponent(out PieceItem pieceItem);
+            ;
             _boardCreator.PlacementOfItem(pieceItem, column, y, randomItemType);
             pieceItem.pieceItemMovement.MoveAction(column, y, 0.3f);
         }
@@ -145,7 +137,7 @@ public class BoardCollapseAndRefill : MonoBehaviour
 
     private void RefillBoard()
     {
-        for (int column = 0; column < _boardCreator.width; column++)
+        for (var column = 0; column < _boardCreator.width; column++)
         {
             FillColumnFromAbove(column);
         }

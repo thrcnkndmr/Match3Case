@@ -1,7 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 
 public class BoardCreator : MonoBehaviour
@@ -28,19 +27,26 @@ public class BoardCreator : MonoBehaviour
 
     private void OnEnable()
     {
-        EventManager.OnStartGameEvent += OnStartGame;
         EventManager.OnLevelStart += OnLevelStart;
+        EventManager.OnRestartLevel += OnRestartLevel;
+        EventManager.OnNextLevel += OnNextLevel;
+    }
+
+    private void OnNextLevel()
+    {
+        BoardReset();
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    private void OnRestartLevel()
+    {
+        BoardReset();
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     private void OnLevelStart()
     {
         BoardInitialize();
-    }
-
-    private void OnStartGame()
-    {
-       // BoardInitialize();
-       Debug.Log("dur");
     }
 
     private void Start()
@@ -50,21 +56,19 @@ public class BoardCreator : MonoBehaviour
 
     private void BoardReset()
     {
-        for (int i = 0; i < width; i++)
+        for (var i = 0; i < width; i++)
         {
-            for (int j = 0; j < height; j++)
+            for (var j = 0; j < height; j++)
             {
                 if (_pieceItems[i, j] != null)
                 {
                     _pool.DeactivateObject(_pieceItems[i, j].gameObject, _pieceItems[i, j].poolItemType);
                     _pieceItems[i, j] = null;
                 }
-            
-                if (_tiles[i, j] != null)
-                {
-                    _pool.DeactivateObject(_tiles[i,j].gameObject, PoolItemType.TilePrefab);
-                    _tiles[i, j] = null;
-                }
+
+                if (_tiles[i, j] == null) continue;
+                _pool.DeactivateObject(_tiles[i, j].gameObject, PoolItemType.TilePrefab);
+                _tiles[i, j] = null;
             }
         }
     }
@@ -72,15 +76,14 @@ public class BoardCreator : MonoBehaviour
     private void Init()
     {
         _pool = Pool.Instance;
-        
     }
+
     private void BoardInitialize()
     {
         CreatingNewArray(width, height);
         CreatingTiles();
         AddingItemsToList();
         FillRandomToBoard();
-        
     }
 
     private void AddingItemsToList()
@@ -157,9 +160,11 @@ public class BoardCreator : MonoBehaviour
             }
         }
     }
-    
+
     private void OnDisable()
     {
-        EventManager.OnStartGameEvent -= OnStartGame;
+        EventManager.OnLevelStart -= OnLevelStart;
+        EventManager.OnRestartLevel -= OnRestartLevel;
+        EventManager.OnNextLevel -= OnNextLevel;
     }
-} 
+}

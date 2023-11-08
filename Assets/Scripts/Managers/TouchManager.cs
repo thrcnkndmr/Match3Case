@@ -69,27 +69,30 @@ namespace thrcnkndmr
             else
             {
                 Vector2 screenPosition = Input.mousePosition;
-                Vector2 worldPosition = Camera.main.ScreenToWorldPoint(screenPosition);
+                if (Camera.main != null)
+                {
+	                Vector2 worldPosition = Camera.main.ScreenToWorldPoint(screenPosition);
 
-                if (Input.GetMouseButtonDown(0))
-                {
-                    _touch.Phase = TouchInput.TouchPhase.Started;
-                    _touch.FirstScreenPosition = screenPosition;
-                    _touch.FirstWorldPosition = worldPosition;
-                }
-                else if (Input.GetMouseButtonUp(0))
-                {
-                    _touch.Phase = TouchInput.TouchPhase.Ended;
-                }
-                else
-                {
-                    _touch.Phase = TouchInput.TouchPhase.Moved;
-                    _touch.DeltaScreenPosition = screenPosition - _touch.ScreenPosition;
-                    _touch.DeltaWorldPosition = worldPosition - _touch.WorldPosition;
-                }
+	                if (Input.GetMouseButtonDown(0))
+	                {
+		                _touch.Phase = TouchInput.TouchPhase.Started;
+		                _touch.FirstScreenPosition = screenPosition;
+		                _touch.FirstWorldPosition = worldPosition;
+	                }
+	                else if (Input.GetMouseButtonUp(0))
+	                {
+		                _touch.Phase = TouchInput.TouchPhase.Ended;
+	                }
+	                else
+	                {
+		                _touch.Phase = TouchInput.TouchPhase.Moved;
+		                _touch.DeltaScreenPosition = screenPosition - _touch.ScreenPosition;
+		                _touch.DeltaWorldPosition = worldPosition - _touch.WorldPosition;
+	                }
 
-                _touch.ScreenPosition = screenPosition;
-                _touch.WorldPosition = worldPosition;
+	                _touch.ScreenPosition = screenPosition;
+	                _touch.WorldPosition = worldPosition;
+                }
             }
 
 #else

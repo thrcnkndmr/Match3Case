@@ -1,9 +1,8 @@
-using System;
 using thrcnkndmr;
 using UnityEngine;
+
 public class AudioManager : MonoSingleton<AudioManager>
 {
-
     [SerializeField] private AudioClip matchSound;
     [SerializeField] private AudioClip winSound;
     [SerializeField] private AudioClip loseSound;
@@ -14,7 +13,7 @@ public class AudioManager : MonoSingleton<AudioManager>
 
     private void Awake()
     {
-        var  sources = GetComponents<AudioSource>();
+        var sources = GetComponents<AudioSource>();
         audioSource = sources[0];
         musicSource = sources[1];
         PlayMusic(backgroundMusic);
@@ -29,7 +28,8 @@ public class AudioManager : MonoSingleton<AudioManager>
 
     private void OnLevelSuccess()
     {
-        PlayWinSound();    }
+        PlayWinSound();
+    }
 
     private void OnLevelFail()
     {
@@ -41,22 +41,22 @@ public class AudioManager : MonoSingleton<AudioManager>
         PlayMatchSound();
     }
 
-    public void PlayMatchSound()
+    private void PlayMatchSound()
     {
         audioSource.PlayOneShot(matchSound);
     }
 
-    public void PlayWinSound()
+    private void PlayWinSound()
     {
         audioSource.PlayOneShot(winSound);
     }
 
-    public void PlayLoseSound()
+    private void PlayLoseSound()
     {
         audioSource.PlayOneShot(loseSound);
     }
 
-    public void PlayMusic(AudioClip musicClip)
+    private void PlayMusic(AudioClip musicClip)
     {
         musicSource.clip = musicClip;
         musicSource.loop = true;
@@ -66,7 +66,7 @@ public class AudioManager : MonoSingleton<AudioManager>
     private void OnDisable()
     {
         EventManager.OnFindMatch -= OnFindMatch;
-        EventManager.OnLevelFail-= OnLevelFail;
+        EventManager.OnLevelFail -= OnLevelFail;
         EventManager.OnLevelSuccess -= OnLevelSuccess;
     }
 }

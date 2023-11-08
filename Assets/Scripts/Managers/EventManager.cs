@@ -10,12 +10,13 @@ public static class EventManager
     public static event Action OnMovedItem;
     public static event Action OnFindMatch;
 
+    public static event Action OnRestartLevel;
+
     public static void OnStartGameInvoker()
     {
         OnStartGameEvent?.Invoke();
     }
-    
-    
+
 
     public static void OnFindMatchInvoker()
     {
@@ -36,14 +37,19 @@ public static class EventManager
     {
         OnLevelFail?.Invoke();
     }
-    
+
     public static void OnLevelSuccessInvoker()
-    { 
+    {
         OnLevelSuccess?.Invoke();
     }
 
     public static void OnNextLevelInvoker()
     {
         OnNextLevel?.Invoke();
+    }
+
+    public static void OnRestartLevelInvoker()
+    {
+        OnRestartLevel?.Invoke();
     }
 }
