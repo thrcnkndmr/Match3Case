@@ -1,25 +1,17 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using DG.Tweening;
-
 public class BoardMovement : MonoBehaviour
 {
     private Tile _clickedTile;
     private Tile _targetTile;
-
     [SerializeField] private float swapTime;
-
     public bool isMoving;
     public bool canPlayerTouch = true;
-
-
     private BoardCreator _boardCreator;
     private BoardMatchFinding _boardMatchFinding;
+    private BoardCollapseAndRefill _boardCollapseAndRefill;
     
-
     private void Awake()
     {
         Init();
@@ -29,6 +21,7 @@ public class BoardMovement : MonoBehaviour
     {
         _boardCreator = BoardManager.Instance.boardCreator;
         _boardMatchFinding = BoardManager.Instance.boardMatchFinding;
+        _boardCollapseAndRefill = BoardManager.Instance.boardCollapseAndRefill;
     }
 
     public void ClickedItem(Tile tile)
@@ -85,18 +78,15 @@ public class BoardMovement : MonoBehaviour
             }
             else
             {
-                yield return new WaitForSeconds(t + 0.1f);
-                _boardCreator.ClearAndRefillBoard(clickedPieceMatches.Union(targetPieceMatches).ToList());
+                _boardCollapseAndRefill.ClearAndRefillBoard(clickedPieceMatches.Union(targetPieceMatches).ToList());
             }
-
-                
-                
+            _clickedTile = null;
+            _targetTile = null;
         }
-        _clickedTile = null;
-        _targetTile = null;
+       
     }
 
-    private bool IsNextTo(Tile start, Tile end)
+    private static bool IsNextTo(Tile start, Tile end)
     {
         if (Mathf.Abs(start.rowIndex - end.rowIndex) == 1 && start.columnIndex == end.columnIndex)
         {

@@ -236,13 +236,25 @@ public class BoardMatchFinding : MonoBehaviour
         spriteRenderer.color = col;
     }
     
+    public void ClearAllHighlights()
+    {
+        for (var x = 0; x < _boardCreator.width; x++)
+        {
+            for (var y = 0; y < _boardCreator.height; y++)
+            {
+                HighlightTileOff(x, y);
+            }
+        }
+    }
+
     public void HighlightPieces(List<PieceItem> gamePieces)
     {
+        ClearAllHighlights(); 
         foreach (var piece in gamePieces)
         {
             if (piece != null)
             {
-                HighlightTileOn(piece.rowIndex, piece.columnIndex,_itemTypeColors[piece.poolItemType]);
+                HighlightTileOn(piece.rowIndex, piece.columnIndex, _itemTypeColors[piece.poolItemType]);
             }
         }
     }

@@ -31,22 +31,18 @@ public class PieceItemMovement : MonoBehaviour
         Move(new Vector3(x, y, -1), time);
     }
 
-    private void Move(Vector3 destination, float timeToMove)
-    {
-        var scaleUp = new Vector3(1.3f, 1.3f, 1.3f);
-        var originalScale = transform.localScale;
-        var moveSequence = DOTween.Sequence();
-
-        moveSequence.Append(transform.DOMove(destination, timeToMove).SetEase(Ease.Linear))
-            .Join(transform.DOScale(scaleUp, timeToMove / 2))
-            .Append(transform.DOScale(originalScale, timeToMove / 2))
-            .OnStart(() => _boardMovement.isMoving = true)
-            .OnComplete(() =>
+  private void Move(Vector3 destination, float timeToMove)
+        {
+            var sequence = DOTween.Sequence();
+            sequence.Append(transform.DOMove(destination, timeToMove).SetEase(Ease.InOutQuad));
+            sequence.Join(transform.DOScale(new Vector3(1.1f, 1.1f, 1f), timeToMove / 2).SetEase(Ease.OutBack));
+            sequence.OnStart(() => _boardMovement.isMoving = true);
+            sequence.OnComplete(() =>
             {
-                _boardCreator.PlacementOfItem(_pieceItem, (int)destination.x, (int)destination.y,_pieceItem.poolItemType);
+                _boardCreator.PlacementOfItem(_pieceItem, (int)destination.x, (int)destination.y, _pieceItem.poolItemType);
                 _boardMovement.isMoving = false;
+                transform.DOScale(Vector3.one, timeToMove / 2).SetEase(Ease.InBack);
             });
-
-        moveSequence.Play();
-    }
+            sequence.Play();
+        }
 }
